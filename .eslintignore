@@ -1,0 +1,7 @@
+**/boot.logger.ts
+node_modules
+dist
+coverage
+documentation
+src/scripts/archived
+src/scripts/backfill/ENG-61784
