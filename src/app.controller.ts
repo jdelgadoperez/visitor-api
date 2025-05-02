@@ -8,6 +8,8 @@ export class AppController {
   @Get()
   async getVisitorCount(): Promise<string> {
     const count = await this.redisService.incrementVisitorCount();
-    return `Visitor count: ${count}`;
+    const value = `Visitor count: ${count}`
+    console.log(value)
+    return value;
   }
 }
