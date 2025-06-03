@@ -1,8 +1,10 @@
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
   const port = process.env.APP_PORT || 3005;
   if (process.env.NODE_CONFIG_ENV === 'dev') {
     await app.listen(port);
