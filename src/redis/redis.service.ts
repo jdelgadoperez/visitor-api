@@ -20,4 +20,35 @@ export class RedisService implements OnModuleInit {
     const count = await this.client.get('visitor_count');
     return count ? parseInt(count, 10) : 0;
   }
+
+  async storeVisitorData(ipAddress: string, timestamp: string): Promise<void> {
+    const visitorKey = `visitor:${ipAddress}:${Date.now()}`;
+
+    // Store visitor data as a hash
+    await this.client.hset(visitorKey, {
+      ipAddress,
+      timestamp,
+    });
+
+    // Add to a sorted set for easy querying by timestamp
+    await this.client.zadd('visitors_by_time', Date.now(), visitorKey);
+  }
+
+  async getVisitorData(ipAddress: string): Promise<Array<{ ipAddress: string; timestamp: string }>> {
+    const pattern = `visitor:${ipAddress}:*`;
+    const keys = await this.client.keys(pattern);
+
+    const visitorData = [];
+    for (const key of keys) {
+      const data = await this.client.hgetall(key);
+      if (data.ipAddress && data.timestamp) {
+        visitorData.push({
+          ipAddress: data.ipAddress,
+          timestamp: data.timestamp,
+        });
+      }
+    }
+
+    return visitorData.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
 }
