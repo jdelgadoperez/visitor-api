@@ -10,6 +10,7 @@ export class CreateVisitorDto {
 }
 
 export class VisitorResponseDto {
+  code: number;
   message: string;
   ipAddress: string;
   timestamp: string;

@@ -1,15 +1,36 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import Redis, { type Cluster } from 'ioredis';
 
 @Injectable()
-export class RedisService implements OnModuleInit {
-  private client: Redis;
+export class RedisService implements OnModuleInit, OnModuleDestroy {
+  private client: Redis | Cluster;
 
   async onModuleInit() {
-    this.client = new Redis({
+    const isCluster = process.env.REDIS_CLUSTER === 'true';
+    const redisOptions = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    });
+      maxRetriesPerRequest: 3,
+    };
+
+    if (isCluster) {
+      this.client = new Redis.Cluster(
+        [{ ...redisOptions }],
+        {
+          dnsLookup: (address, callback) => callback(null, address),
+          redisOptions: {
+            tls: {},
+          },
+        });
+    } else {
+      this.client = new Redis({ ...redisOptions });
+    }
+  }
+
+  async onModuleDestroy() {
+    if (this.client) {
+      await this.client.quit();
+    }
   }
 
   async incrementVisitorCount(): Promise<number> {
@@ -23,13 +44,11 @@ export class RedisService implements OnModuleInit {
 
   async storeVisitorData(ipAddress: string, timestamp: string): Promise<void> {
     const visitorKey = `visitor:${ipAddress}:${Date.now()}`;
-
     // Store visitor data as a hash
     await this.client.hset(visitorKey, {
       ipAddress,
       timestamp,
     });
-
     // Add to a sorted set for easy querying by timestamp
     await this.client.zadd('visitors_by_time', Date.now(), visitorKey);
   }
@@ -37,7 +56,6 @@ export class RedisService implements OnModuleInit {
   async getVisitorData(ipAddress: string): Promise<Array<{ ipAddress: string; timestamp: string }>> {
     const pattern = `visitor:${ipAddress}:*`;
     const keys = await this.client.keys(pattern);
-
     const visitorData = [];
     for (const key of keys) {
       const data = await this.client.hgetall(key);
@@ -48,7 +66,6 @@ export class RedisService implements OnModuleInit {
         });
       }
     }
-
     return visitorData.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }
 }
