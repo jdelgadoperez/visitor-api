@@ -28,11 +28,20 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  afterAll(async () => {
+    await app.close();
+  });
+
   it('/ (GET)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect(/Visitor count: \d+/);
+      .expect((res) => {
+        expect(res.body.code).toBe(200);
+        expect(res.body.message).toBe('Visitor count');
+        expect(res.body.count).toBeDefined();
+        expect(typeof res.body.count).toBe('string');
+      });
   });
 
   it('/visitor (POST) - valid IPv4 address', () => {
@@ -41,6 +50,7 @@ describe('AppController (e2e)', () => {
       .send({ ipAddress: '192.168.1.1' })
       .expect(201)
       .expect((res) => {
+        expect(res.body.code).toBe(201);
         expect(res.body.message).toBe('Visitor data recorded successfully');
         expect(res.body.ipAddress).toBe('192.168.1.1');
         expect(res.body.timestamp).toBeDefined();
@@ -53,6 +63,7 @@ describe('AppController (e2e)', () => {
       .send({ ipAddress: '2001:0db8:85a3:0000:0000:8a2e:0370:7334' })
       .expect(201)
       .expect((res) => {
+        expect(res.body.code).toBe(201);
         expect(res.body.message).toBe('Visitor data recorded successfully');
         expect(res.body.ipAddress).toBe('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
         expect(res.body.timestamp).toBeDefined();
@@ -109,6 +120,7 @@ describe('AppController (e2e)', () => {
       })
       .expect(201)
       .expect((res) => {
+        expect(res.body.code).toBe(201);
         expect(res.body.message).toBe('Visitor data recorded successfully');
         expect(res.body.ipAddress).toBe('192.168.1.1');
         expect(res.body.timestamp).toBeDefined();
