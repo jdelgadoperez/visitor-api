@@ -15,7 +15,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
     if (isCluster) {
       this.client = new Redis.Cluster(
-        [{ ...redisOptions }],
+        [{
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379', 10),
+        }],
         {
           dnsLookup: (address, callback) => callback(null, address),
           redisOptions: {
