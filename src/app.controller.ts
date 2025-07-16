@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
 import { CreateVisitorDto, VisitorResponseDto } from './dto/visitor.dto';
 import { RedisService } from './redis/redis.service';
 
-@Controller()
+@Controller('visitor-api')
 export class AppController {
   constructor(private readonly redisService: RedisService) { }
 
@@ -11,10 +11,10 @@ export class AppController {
     const count = await this.redisService.incrementVisitorCount();
     const result = {
       code: HttpStatus.OK,
-      message: 'Visitor count',
+      message: 'Total visitor count',
       count: count.toString(),
     }
-    console.log('getVisitorCount ==>>', result)
+    console.log('getTotalVisitorCount ==>>', result)
     return result;
   }
 
